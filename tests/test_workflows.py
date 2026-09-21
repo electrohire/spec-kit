@@ -27,6 +27,15 @@ import pytest
 import yaml
 
 
+def _running_as_root() -> bool:
+    """Whether the test process runs with uid 0.
+
+    chmod-based unreadability cannot be simulated for root (0o000 files
+    remain readable), so tests that rely on unreadable files must skip.
+    """
+    return hasattr(os, "geteuid") and os.geteuid() == 0
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -7637,6 +7646,10 @@ steps:
         engine = WorkflowEngine(project_dir)
         assert engine.list_runs() == []
 
+    @pytest.mark.skipif(
+        _running_as_root(),
+        reason="chmod(0o000) does not make a file unreadable for root",
+    )
     def test_list_skips_unreadable_file(self, project_dir):
         import sys
         import subprocess
@@ -8708,6 +8721,10 @@ class TestStepRegistryCustom:
         assert registry2.is_installed("deploy")
 
     @pytest.mark.skipif(sys.platform == "win32", reason="chmod not reliable on Windows")
+    @pytest.mark.skipif(
+        _running_as_root(),
+        reason="chmod(0o000) does not make a file unreadable for root",
+    )
     def test_registry_unreadable_file_resets(self, project_dir):
         """OSError reading the registry file should fall back to default."""
         from specify_cli.workflows.catalog import StepRegistry
