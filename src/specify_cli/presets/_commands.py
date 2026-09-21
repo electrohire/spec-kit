@@ -391,7 +391,11 @@ def preset_resolve(
         display_layer = layers[0]
         console.print(
             f"  [bold]{safe_template_name}[/bold]: "
-            f"{_escape_markup(str(display_layer['path']))}"
+            f"{_escape_markup(str(display_layer['path']))}",
+            # Keep the resolved path on one line: a wrapped path breaks
+            # copy-paste and the "constitution.md" token the resolve
+            # contract asserts.
+            soft_wrap=True,
         )
         console.print(
             f"    [dim](top layer from: "
